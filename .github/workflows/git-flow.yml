@@ -15,7 +15,7 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   update-develop:
-    if: github.ref == 'refs/head/main' || github.ref == 'refs/head/next' || github.ref == 'refs/head/release'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/next' || github.ref == 'refs/heads/release'
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -37,7 +37,7 @@ jobs:
          GITHUB_TOKEN: ${{ github.token }}
          PULL_REQUEST_BRANCH: "develop"
   update-next:
-    if: github.ref == 'refs/head/main'
+    if: github.ref == 'refs/heads/main'
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -59,7 +59,7 @@ jobs:
          GITHUB_TOKEN: ${{ github.token }}
          PULL_REQUEST_BRANCH: "next"
   update-release:
-    if: github.ref == 'refs/head/main' || github.ref == 'refs/head/next'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/next'
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
