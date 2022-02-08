@@ -1,40 +1,47 @@
 import { AudioComponent } from "./types"
 export type TWave = 'sine' | 'triangle' | 'square'
 
-export type TOSC = {
+export type OscillatorConfig = {
   /**
    * The function generators desired waveform
    *
    * @type {('sine' | 'triangle' | 'square')}
    */
-  wave: TWave
+  wave?: TWave
   /**
    *  Amplitude of the oscillator
    *
    * @type {number}
    */
-  amp: number
+  volume?: number
   /**
    * Semi-tones away from the root
    *
    * @type {number}
    */
-  semi: number
+  semi?: number
   /**
    * Mutes the oscillator
    *
    * @type {boolean}
    */
   mute?: boolean
+  /**
+   * Detune the oscillator
+   *
+   * @type {number}
+   */
+  detune?: number
 }
 
-export default class Oscillator extends AudioComponent {
+export default class Oscillator extends AudioComponent implements OscillatorConfig {
   protected readonly osc: OscillatorNode
   protected readonly gain: GainNode
   semi: number
   private _mute: boolean = false
   set mute(val: boolean) {
     this.volume = 0
+    this._mute = val
   }
   get mute() {
     return this._mute
@@ -42,9 +49,12 @@ export default class Oscillator extends AudioComponent {
 
   set volume(val: number) {
     this.gain.gain.setValueAtTime(val, this.gain.context.currentTime)
+    this._volume = this.gain.gain.value
   }
+
+  private _volume: number = 0.5
   get volume() {
-    return this.gain.gain.value
+    return this._volume
   }
 
   private _wave: TWave = 'sine'
@@ -65,18 +75,32 @@ export default class Oscillator extends AudioComponent {
   }
 
   private _freq: number = 440
+  /**
+   * Set the frequency of the oscialltor
+   *
+   * @memberof Oscillator
+   */
   set frequency(val: number) {
     this.osc.frequency.setValueAtTime(val, this.osc.context.currentTime)
     this._freq = val
   }
-  constructor(ctx: AudioContext) {
+
+  get frequency() {
+    return this._freq
+  }
+
+  constructor(ctx: AudioContext, config?: OscillatorConfig) {
     super(ctx)
     this.osc = ctx.createOscillator()
     this.gain = ctx.createGain()
+    this.semi = 0
+    this.gain.gain.value = config?.volume || 0.75
+    this.mute = !!config?.mute
+    this.osc.type = config?.wave || 'sine'
+
     this.osc.connect(this.gain)
     this.entry.connect(this.gain)
     this.gain.connect(this.exit)
-    this.semi = 0
     this.osc.start(ctx.currentTime)
   }
 }

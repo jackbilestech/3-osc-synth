@@ -1,5 +1,38 @@
 import { AudioComponent } from "./types"
 
+export type EnvelopeConfig = {
+  /**
+   * Sets the maximum amplitude and the time it takes for the signal to rise to this value.
+   *
+   * @type {{ amp: number, time: number }}
+   */
+  A?: { amp?: number, time?: number }
+  /**
+   * Decay time
+   * 
+   * The time it takes to decay from the initial attack
+   *
+   * @type {number}
+   */
+  D?: number
+  /**
+   *  Sustain amplitude
+   * 
+   *  As the note is held, this is the notes amplitude
+   *
+   * @type {number}
+   */
+  S?: number
+  /**
+   * Release time
+   * 
+   * The time it takes for the sound to reach 0
+   *
+   * @type {number}
+   */
+  R?: number
+}
+
 export const attack = (
   node: GainNode,
   a: number,
@@ -19,7 +52,7 @@ export const release = (node: GainNode, t: number) => {
   node.gain.linearRampToValueAtTime(0, now + t / 1000)
 }
 
-export default class Envelope extends AudioComponent {
+export default class Envelope extends AudioComponent implements EnvelopeConfig {
   protected readonly amp: GainNode
   private attack: { amp: number, time: number }
   get A() {
@@ -50,27 +83,30 @@ export default class Envelope extends AudioComponent {
 
   private release: number
   get R() {
-    return this.sustain
+    return this.release
   }
 
   set R(val: number) {
     this.release = val
   }
-  constructor(ctx: AudioContext) {
+  constructor(ctx: AudioContext, config?: EnvelopeConfig) {
     super(ctx)
     this.amp = ctx.createGain()
     this.amp.gain.value = 0
     this.entry.connect(this.amp)
     this.amp.connect(this.exit)
-    this.attack = { amp: 0.75, time: 500 }
-    this.decay = 500
-    this.sustain = 0.3
-    this.release = 500
+    this.attack = { amp: config?.A?.amp || 0.75, time: config?.A?.time || 500 }
+    this.decay = config?.D || 500
+    this.sustain = config?.S || 0.3
+    this.release = config?.R || 500
   }
 
+  /**
+   * Open the envelope
+   *
+   * @memberof Envelope
+   */
   open() {
-    console.log('attacking');
-    
     attack(
       this.amp,
       this.attack.amp,
@@ -79,6 +115,11 @@ export default class Envelope extends AudioComponent {
       this.sustain
     )
   }
+  /**
+   * Close the envelope
+   *
+   * @memberof Envelope
+   */
   close() {
     release(this.amp, this.release)
   }

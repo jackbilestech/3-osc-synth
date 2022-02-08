@@ -1,45 +1,9 @@
 import { AudioComponent } from "./types"
-export type TENV = {
-  /**
-   * Attack amplitude 
-   * 
-   * The amplitude the signal rises to on activation
-   * 
-   * @type {number}
-   */
-  a: number
-  /**
-   * Attack time
-   * 
-   * The time it takes from the signal to reach the designated amplitude
-   *
-   * @type {number}
-   */
-  at: number
-  /**
-   * Decay time
-   * 
-   * The time it takes to decay from the initial attack
-   *
-   * @type {number}
-   */
-  dt: number
-  /**
-   *  Sustain amplitude
-   * 
-   *  As the note is held, this is the notes amplitude
-   *
-   * @type {number}
-   */
-  s: number
-  /**
-   * Release time
-   * 
-   * The time it takes for the sound to reach 0
-   *
-   * @type {number}
-   */
-  rt: number
+
+
+export type MasterConfig = {
+  volume?: number
+  mute?: boolean
 }
 
 export default class Master extends AudioComponent {
@@ -55,7 +19,9 @@ export default class Master extends AudioComponent {
 
   private _volume: number = 0.75
   set volume(val: number) {
-    this.gain.gain.setValueAtTime(this.volume, this.gain.context.currentTime)
+    this.gain.gain.setValueAtTime(val, this.gain.context.currentTime)
+    console.log('Setting volume');
+
     this._volume = val
   }
 
@@ -63,12 +29,13 @@ export default class Master extends AudioComponent {
     return this._volume
   }
 
-  constructor(ctx: AudioContext) {
+  constructor(ctx: AudioContext, config?: MasterConfig) {
     super(ctx)
 
     this.gain = ctx.createGain()
     this.entry.connect(this.gain)
     this.gain.connect(this.exit)
-    this.mute = true
+    this.mute = !!config?.mute
+    this.volume = config?.volume || 0.75
   }
 }

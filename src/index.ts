@@ -1,7 +1,7 @@
-import Envelope, { attack, release } from './adsr'
-import Oscillator from './function_generator'
-import { IAmp, IConfig, IMaster, IOsc, ISynth } from './types'
-import Master from './volume'
+import Envelope, { attack, EnvelopeConfig, release } from './adsr'
+import { Filter, FilterConfig } from './filter'
+import Oscillator, { OscillatorConfig } from './function_generator'
+import Master, { MasterConfig } from './volume'
 
 const midi = Array(127)
 const a = 440 // a is 440 hz...
@@ -9,37 +9,50 @@ for (let x = 0; x < 127; x++) {
   midi[x] = (a / 32) * 2 ** ((x - 9) / 12)
 }
 
-const defaultConfig: IConfig = {
+export type DefaultConfig = {
+  osc1?: OscillatorConfig,
+  osc2?: OscillatorConfig,
+  osc3?: OscillatorConfig,
+  env?: EnvelopeConfig,
+  filter?: FilterConfig
+  master?: MasterConfig
+}
+
+export const defaultConfig: DefaultConfig = {
   osc1: {
     wave: 'sine',
-    amp: 0.75,
+    volume: 0.75,
     semi: 0,
   },
   osc2: {
-    wave: 'sine',
-    amp: 0.5,
+    wave: 'triangle',
+    volume: 0.5,
     semi: 3,
   },
   osc3: {
-    wave: 'sine',
-    amp: 0.3,
+    wave: 'square',
+    volume: 0.3,
     semi: 5,
     mute: true,
   },
-  envelope: {
-    a: 1,
-    at: 200,
-    dt: 200,
-    s: 0.5,
-    rt: 400,
+  env: {
+    A: {
+      amp: 0.25,
+      time: 1000
+    },
+    D: 200,
+    S: 0.5,
+    R: 400,
   },
-  master: 0.75,
+  master: {
+    volume: 0.25
+  },
 }
 
 
-class ThreeOscSynth { // implements ISynth {
-  config: IConfig
-  context: AudioContext
+class ThreeOscSynth {
+  readonly config: DefaultConfig
+  readonly context: AudioContext
 
   master: Master
 
@@ -49,25 +62,31 @@ class ThreeOscSynth { // implements ISynth {
   osc2: Oscillator
   osc3: Oscillator
 
-  constructor(context?: AudioContext, config?: IConfig) {
+  filter: Filter
+  constructor(config?: DefaultConfig)
+  constructor(config?: DefaultConfig, context?: AudioContext) {
 
     this.config = config || defaultConfig
     this.context = context || new AudioContext()
 
-    this.master = new Master(this.context)
+    this.master = new Master(this.context, config?.master)
     this.master.output.connect(this.context.destination)
 
-    this.envelope = new Envelope(this.context)
-    this.envelope.output.connect(this.master.input)
+    this.envelope = new Envelope(this.context, config?.env)
 
-    this.osc1 = new Oscillator(this.context)
+    this.osc1 = new Oscillator(this.context, config?.osc1)
     this.osc1.output.connect(this.envelope.input)
 
-    this.osc2 = new Oscillator(this.context)
+    this.osc2 = new Oscillator(this.context, config?.osc2)
     this.osc2.output.connect(this.envelope.input)
 
-    this.osc3 = new Oscillator(this.context)
+    this.osc3 = new Oscillator(this.context, config?.osc3)
     this.osc3.output.connect(this.envelope.input)
+
+    this.filter = new Filter(this.context, config?.filter)
+    this.envelope.output.connect(this.filter.input)
+
+    this.filter.output.connect(this.master.input)
   }
   /**
    * Play note
@@ -90,6 +109,16 @@ class ThreeOscSynth { // implements ISynth {
    */
   noteUp() {
     this.envelope.close()
+  }
+
+  /**
+   *
+   * @param {IConfig} config
+   * @memberof ThreeOscSynth
+   * @todo
+   */
+  loadPreset(config: DefaultConfig) {
+
   }
 }
 

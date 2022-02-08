@@ -1,70 +1,88 @@
 <template>
-  <div id="app" v-if="synth">
-    <button @click.prevent="play">Play</button>
-    <div id="osc1">
-      <label>
-        Volume
-        <input
-          v-model="synth.master.volume"
-          type="range"
-          min="0"
-          max="0.75"
-          step="0.01"
-          @change="evt => (synth.master.volume = evt.target.value)"
-        />
-      </label>
-      <label>
-        Detune
-        <input
-          v-model="synth.osc1.detune"
-          type="range"
-          min="-100"
-          max="100"
-          step="1"
-          @change="evt => (synth.osc1.detune = evt.target.value)"
-        />
-      </label>
-      <label>
-        Wave
-        <select
-          v-model="synth.osc1.wave"
-          @change="evt => (synth.osc1.wave = evt.target.value)"
-        >
-          <option value="square">Harsh</option>
-          <option value="triangle">Three Sided</option>
-          <option value="sine">Pure</option>
-        </select>
-      </label>
-    </div>
-    <div id="osc2"></div>
-    <div id="osc3"></div>
-    <div id="amp"></div>
-    <div id="master"></div>
-  </div>
-  <div v-else>
-    <button @click.prevent="press">Load Instance</button>
-  </div>
+  <v-app>
+    <v-main>
+      <v-container v-if="!store.synth">
+        <v-row>
+          <v-col>
+            <v-btn @click="init"> Load Instance </v-btn>
+          </v-col>
+        </v-row>
+      </v-container>
+      <v-container v-else fill-height>
+        <v-row>
+          <v-col>
+            <ENV></ENV>
+          </v-col>
+          <v-col cols="2">
+            <v-card shaped outlined>
+              <v-card-title>MASTER</v-card-title>
+              <v-card-text>
+                Volume
+                <KnobControl
+                  v-model="store.synth.master.volume"
+                  :min="0"
+                  :max="0.75"
+                  :stepSize="0.01"
+                  :valueDisplayFunction="(v) => Math.round(v * 100) / 100"
+                  :responsive="true"
+                >
+                </KnobControl>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <SCOPE></SCOPE>
+          </v-col>
+          <v-col>
+            <VCFILTER></VCFILTER>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <OSC :num="1"></OSC>
+          </v-col>
+          <v-col>
+            <OSC :num="2"></OSC>
+          </v-col>
+          <v-col>
+            <OSC :num="3"></OSC>
+          </v-col>
+        </v-row>
+        <v-row>
+          <KEYS></KEYS>
+        </v-row>
+      </v-container>
+    </v-main>
+  </v-app>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
+import synthStore from "@/store/synth.store";
 import Component from "vue-class-component";
-import Synth from "../../src";
+import OSC from "@/components/Osc.vue";
+import ENV from "@/components/Env.vue";
+import KEYS from "@/components/Keys.vue";
+import SCOPE from "@/components/Oscilloscope.vue";
+import VCFILTER from "@/components/Filter.vue";
+import KnobControl from "vue-knob-control";
 
-@Component
+@Component({
+  components: {
+    OSC,
+    ENV,
+    KEYS,
+    SCOPE,
+    VCFILTER,
+    KnobControl,
+  },
+})
 export default class App extends Vue {
-  synth: Synth | null = null;
-  mounted(): void {}
-  press(): void {
-    var ctx = new AudioContext();
-    this.synth = new Synth(ctx);
-  }
-
-  play() {
-    this.synth?.noteDown(60);
-    setTimeout(() => {
-      this.synth?.noteUp();
-    }, 1000);
+  store = synthStore;
+  async init() {
+    await synthStore.init();
   }
 }
 </script>

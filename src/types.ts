@@ -1,8 +1,21 @@
-import { TOSC, TWave } from "./function_generator"
-import { TENV } from "./volume"
-
 class Chainable {
+  /**
+   * The entry point of the node
+   * 
+   * Used to plug into other Web Audio nodes
+   *
+   * @protected
+   * @memberof Chainable
+   */
   protected readonly entry
+  /**
+   * The exit point of the node
+   * 
+   * Used to plug into other Web Audio nodes
+   *
+   * @protected
+   * @memberof Chainable
+   */
   protected readonly exit
 
   constructor(ctx: AudioContext) {
@@ -12,7 +25,19 @@ class Chainable {
 }
 
 export class AudioComponent extends Chainable {
+  /**
+   * The input of the Audio Component
+   * Can be used to plugin into other Web Audio Nodes
+   * @type {AudioNode}
+   * @memberof AudioComponent
+   */
   readonly input: AudioNode
+  /**
+   * The output of the Audio Component
+   * Can be used to plugin into other Web Audio Nodes
+   * @type {AudioNode}
+   * @memberof AudioComponent
+   */
   readonly output: AudioNode
 
   constructor(ctx: AudioContext) {
@@ -22,6 +47,12 @@ export class AudioComponent extends Chainable {
     this.bypass(false)
   }
 
+  /**
+   * True bypass the audio component
+   *
+   * @param {boolean} val
+   * @memberof AudioComponent
+   */
   public bypass(val: boolean) {
     this.input.disconnect()
     if (val) {
@@ -32,44 +63,4 @@ export class AudioComponent extends Chainable {
       this.exit.connect(this.output)
     }
   }
-}
-
-export interface IConfig {
-  osc1: TOSC
-  osc2: TOSC
-  osc3: TOSC
-  envelope: TENV
-  /**
-   * Master volume
-   */
-  master: number
-}
-
-export interface IMaster {
-  volume: number
-  mute: boolean
-}
-
-export interface IAmp {
-  A: { amp?: number, time?: number }
-  D: number
-  S: number
-  R: number
-}
-
-export interface IOsc {
-  detune: number
-  mute: boolean
-  volume: number
-  wave: TWave
-}
-
-export interface ISynth {
-  noteDown(midiNote: number): void
-  noteUp(): void
-  master: IMaster
-  envelope: IAmp
-  osc1: IOsc
-  osc2: IOsc
-  osc3: IOsc
 }

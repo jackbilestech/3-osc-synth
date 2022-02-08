@@ -35,7 +35,7 @@ module.exports = {
       // It is relative to root property.
       // Notice: It won't actually do it. You need to use `require.context` or `Vue.component`
       globalComponents: [
-        './src/components/**/*.vue'
+        './demo/src/components/**/*.vue'
       ]
     }
   ]
